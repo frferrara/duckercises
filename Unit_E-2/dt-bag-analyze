@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+# Import modules
+import sys
+import rosbag
+import numpy as np
+from rospy       import rostime
+from collections import OrderedDict
+from ruamel      import yaml
+
+
+# Load the bag file
+def loadBag(filename):
+    bag = rosbag.Bag(filename)
+
+    return bag
+
+
+# Close the bag file
+def closeBag(bag):
+    bag.close()
+
+
+# Collect the data
+def collectData(bag):
+    # Instantiate an empty collection
+    data = {}
+
+    # Loop through the bag data
+    for topic, msg, t in bag.read_messages():
+        if topic not in data:
+            data[topic] = {}
+
+        # Calculate the time
+        data[topic][msg.header.seq] = t.to_sec()
+    
+    return data
+
+
+# Analyze the data
+def analyze_data(data):
+    for topic in data:
+        # Get the number of messages
+        num_msgs = len(data[topic])
+
+        # Sort the dictionary
+        sortedList = sorted(data[topic].items())
+
+        # Take the time differences
+        t_sorted = [x[1] for x in sortedList]
+        t_diff = np.diff(t_sorted)
+
+        # Calculate statistics
+        stats = {
+            topic: {
+                "num_messages": num_msgs,
+                "period": {
+                    "min": round(np.amin(t_diff), 2),
+                    "max": round(np.amax(t_diff), 2),
+                    "average": round(np.average(t_diff), 2),
+                    "median": round(np.median(t_diff), 2),
+                }
+            }
+        }
+
+        # Dump statistics
+        yaml.dump(stats, sys.stdout, default_flow_style = False)
+        print ""
+
+
+# Script function
+def dt_bag_analyze(filename):
+    # Load the bag file
+    bag = loadBag(filename)
+
+    # Collect the data
+    data = collectData(bag)
+
+    # Analyze the data
+    analyze_data(data)
+
+    # Close the bag file
+    closeBag(bag)
+
+    return
+
+
+# Run the script function
+try:
+    dt_bag_analyze(sys.argv[1])
+except:
+    print "Exception occurred!"

@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+
+# Import modules
+import sys
+import rosbag
+import cv2
+from os import path
+import duckietown_utils as du
+
+
+# Check the file path
+def checkFilePath(filename):
+    # Initialize to failure
+    ret = 2
+
+    if path.exists(filename):
+        ret = 0
+
+    return ret
+
+
+# Create the thumbnails
+def createThumbnails(file_in, topic_in, output_dir):
+    # Open the bag file
+    bag = rosbag.Bag(file_in)
+
+    # Initialize thumbnail number
+    num = 0
+
+    # Loop through the bag
+    for topic, msg, t in bag.read_messages():
+        # /tesla/camera_node/image/compressed
+        # print(topic) 
+
+        if topic_in == topic:
+            # Get the RGB image from the ROS message
+            im_rgb = du.rgb_from_ros(msg)
+
+            # Convert the RGB image to BGR
+            im_bgr = cv2.cvtColor(im_rgb, cv2.COLOR_RGB2BGR)
+
+            # Resize the image
+            max_size = (500, 500)
+            im_resized = cv2.resize(im_bgr, max_size)
+
+            # Write the image
+            file_out = output_dir + "/" + str(num).rjust(5, "0") + ".jpg"
+            cv2.imwrite(file_out, im_resized)
+            num += 1
+
+    # Close the bag file
+    bag.close()
+
+
+# Script function
+def dt_bag_thumbnails(filename, topic, output_dir):
+    # Check the file path
+    ret = checkFilePath(filename)
+
+    # Create the thumbnails
+    createThumbnails(filename, topic, output_dir)
+
+    return ret
+
+
+# Call the script function
+try:
+    ret = dt_bag_thumbnails(sys.argv[1], sys.argv[2], sys.argv[3])
+except AttributeError:
+    ret = 98
+    print "No image in topic"
+except:
+    ret = 99
+    print "Exception occurred!"
+
+# Exit code
+print "Exit code: %r" %ret
+sys.exit(ret)

@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+# Import modules
+import sys
+import rosbag
+from os import path
+
+
+# Check the file path
+def checkFilePath(filename):
+    # Initialize to failure
+    ret = 2
+
+    if path.exists(filename):
+        ret = 0
+
+    return ret
+
+
+# Collect the data
+def decimateBag(bag_in, num_msgs, file_out):
+    # Create a bag file for writing
+    bag_out = rosbag.Bag(file_out, 'w')
+    
+    # Instantiate an empty collection
+    data = {}
+
+    # Loop through the bag data
+    for topic, msg, t in bag_in.read_messages():
+        if topic not in data:
+            data[topic] = 0
+        data[topic] += 1
+        if data[topic] % num_msgs == 0:
+            bag_out.write(topic, msg, t)
+    
+    return bag_out
+
+
+# Script function
+def dt_bag_decimate(file_in, num_msgs, file_out):
+    # Check the file path
+    ret = checkFilePath(file_in)
+
+    # Check the number of messages
+    if ret == 0 and num_msgs <= 0:
+        ret = 50
+
+    if ret == 0:
+        # Load the bag file
+        bag_in = rosbag.Bag(file_in)
+
+        #  decimate the data
+        bag_out = decimateBag(bag_in, num_msgs, file_out)
+
+        # Close the bag files
+        bag_in.close()
+        bag_out.flush()
+        bag_out.close()
+
+    return ret
+
+
+
+# Run the script function
+try:
+    ret = dt_bag_decimate(sys.argv[1], int(sys.argv[2]), sys.argv[3])
+except IndexError:
+    print "Not enough arguments given (IndexError)"
+except:
+    print "Exception occurred!"
+
+# Print exit code
+print "Exit code: %r" %ret
+sys.exit(ret)
