@@ -1,0 +1,132 @@
+#!/usr/bin/env python
+
+# Import modules
+import sys
+import cv2
+import numpy as np
+from os  import path
+from PIL import Image
+
+
+# Check the file path
+def checkFilePath(filename):
+    # Initialize to failure
+    ret = 2
+
+    if path.exists(filename):
+        ret = 0
+
+    return ret
+
+
+# Load and decode an image
+def loadAndDecode(filename):
+    # Check the image
+    img_check = Image.open(filename)
+    img_check.load()
+
+    # Read the image
+    im = cv2.imread(filename)
+
+    return im
+
+
+# Flip an image
+def flipImage(im, direction):
+    if direction == "horizontal":
+        axis = 1
+    elif direction == "vertical":
+        axis = 0
+    else:
+        raise ValueError("Direction must be either horizontal or vertical!")
+    
+    return cv2.flip(im, axis)
+
+
+# Flip horizontally
+def flipHor(im):
+    return flipImage(im, "horizontal")
+
+
+# Flip vertically
+def flipVer(im):
+    return flipImage(im, "vertical")
+
+
+# Convert to grayscale
+def grayFromBgr(bgr):
+    return cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+
+
+# Apply a sepia filter
+def sepiaFromBgr(bgr):
+    # Filter matrix
+    K = np.matrix([[0.272, 0.534, 0.131], \
+                   [0.349, 0.686, 0.168], \
+                   [0.393, 0.769, 0.189]])
+    
+    return cv2.transform(bgr, K)
+
+
+# Apply the filter function
+def applyFilFun(fil, im_in):
+    # Define functions dictionary
+    fil_fun = {
+        "flip-vertical":    flipVer,
+        "flip-horizontal":  flipHor,
+        "grayscale":        grayFromBgr,
+        "sepia":            sepiaFromBgr
+    }
+
+    try:
+        # Check, if function is available
+        if fil in fil_fun.keys():
+            im_out = fil_fun[fil](im_in)
+        else:
+            im_out = im_in
+    except:
+        im_out = im_in
+        print("Filter %s could not be applied!", fil)
+    
+    return im_out
+
+
+# script function
+def dt_instagram(im_in, filters, im_out):
+    # Check the file path
+    ret = checkFilePath(im_in)
+
+    if ret == 0:
+        # Load the image
+        im = loadAndDecode(im_in)
+
+        # Split the filters
+        delimiter = ":"
+        fil_array = filters.split(delimiter)
+
+        # Loop through the filter array
+        im_mod = im
+        for fil in fil_array:
+            im_mod = applyFilFun(fil, im_mod)
+        
+        # Save the modified image
+        cv2.imwrite(im_out, im_mod)
+
+    return ret
+
+
+# Run the script function
+try:
+    ret = dt_instagram(sys.argv[1], sys.argv[2], sys.argv[3])
+except IOError as e:
+    print(str(e))
+    ret = 97
+except IndexError as e:
+    print(str(e))
+    ret = 98
+except Exception as e:
+    print(str(e))
+    ret = 99
+
+print "Exit code: %r" %ret
+sys.exit(ret)
