@@ -1,0 +1,177 @@
+#!/usr/bin/env python
+
+# Import modules
+import sys
+import traceback
+import argparse
+import rosbag
+import cv2
+import duckietown_utils as du
+import numpy            as np
+from os import path
+
+
+# Check a file
+def checkFile(file_path):
+    # Initialize to failure
+    ret = 2
+    
+    # Check, if the file_path points to a file
+    if path.isfile(file_path):
+        ret = 0
+    
+    return ret
+
+
+# Flip an image
+def flipImage(im, direction):
+    if direction == "horizontal":
+        axis = 1
+    elif direction == "vertical":
+        axis = 0
+    else:
+        raise ValueError("Direction must be either horizontal or vertical!")
+    
+    return cv2.flip(im, axis)
+
+
+# Flip horizontally
+def flipHor(im):
+    return flipImage(im, "horizontal")
+
+
+# Flip vertically
+def flipVer(im):
+    return flipImage(im, "vertical")
+
+
+# Convert to grayscale
+def grayFromBgr(bgr):
+    return cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+
+
+# Apply a sepia filter
+def sepiaFromBgr(bgr):
+    # Filter matrix
+    K = np.matrix([[0.272, 0.534, 0.131], \
+                   [0.349, 0.686, 0.168], \
+                   [0.393, 0.769, 0.189]])
+    
+    return cv2.transform(bgr, K)
+
+
+# Apply the filter function
+def applyFilFun(fil, im_in):
+    # Define functions dictionary
+    fil_fun = {
+        "flip-vertical":    flipVer,
+        "flip-horizontal":  flipHor,
+        "grayscale":        grayFromBgr,
+        "sepia":            sepiaFromBgr
+    }
+
+    try:
+        # Check, if function is available
+        if fil in fil_fun.keys():
+            im_out = fil_fun[fil](im_in)
+        else:
+            im_out = im_in
+    except:
+        im_out = im_in
+        print("Filter ", fil, " could not be applied!")
+    
+    return im_out
+
+
+# Apply the filters
+def applyFilters(im_bgr, filters):
+    # Split the filters
+    delimiter = ":"
+    fil_array = filters.split(delimiter)
+
+    # Loop through the filter array
+    im_mod = im_bgr
+    for fil in fil_array:
+        im_mod = applyFilFun(fil, im_mod)
+    
+    return im_mod
+
+
+# Process a message
+def processMsg(msg_in, filters):
+    # Get the image from the message
+    im_rgb = du.rgb_from_ros(msg_in)
+    im_bgr = cv2.cvtColor(im_rgb, cv2.COLOR_RGB2BGR)
+    
+    # Apply filters
+    im_mod_bgr = applyFilters(im_bgr, filters)
+    
+    # Convert to message
+    msg_out = msg_in
+    msg_out.data = du.d8_compressed_image_from_cv_image(im_mod_bgr, msg_in).data
+    
+    # Set the header of the output message equal to the input message
+    msg_out.header = msg_in.header
+    
+    return msg_out
+
+
+# Process the bag
+def processBag(bag_in, topic_in, filters, bagfile_out):
+    # Create the output bag file
+    bag_out = rosbag.Bag(bagfile_out, "w")
+    
+    # Loop through the input bag file
+    for topic, msg, t in bag_in.read_messages():
+        # Find out topic
+        # print("%s", topic)
+
+        if topic == topic_in:
+          # Process the message
+          msg_out = processMsg(msg, filters)
+          
+          # Add the message to the bag file
+          bag_out.write(topic, msg_out, t)
+    
+    # Close the output bag file
+    bag_out.close()
+
+
+# Script function
+def dt_bag_instagram(bagfile_in, topic_in, filters, bagfile_out):
+    # Check the bag file
+    ret = checkFile(bagfile_in)
+    
+    if ret == 0:
+        # Open the bag file
+        bag_in = rosbag.Bag(bagfile_in)
+        
+        # Process the bag file
+        processBag(bag_in, topic_in, filters, bagfile_out)
+        
+        # Close the bag file
+        bag_in.close()
+
+    return ret
+
+
+### --- Run the script --- #
+# Define and parse the arguments
+desc = "Apply one or multiple filters to a stream of images in a bag file."
+parser = argparse.ArgumentParser(description = desc)
+parser.add_argument("bag_in")
+parser.add_argument("topic")
+parser.add_argument("filters")
+parser.add_argument("bag_out")
+args = parser.parse_args()
+
+try:
+    # Run the script function
+    ret = dt_bag_instagram(args.bag_in, args.topic, args.filters, args.bag_out)
+except:
+    ret = 99
+    traceback.print_stack()
+    traceback.print_exc()
+
+finally:
+    print("Exit code: ", ret)
