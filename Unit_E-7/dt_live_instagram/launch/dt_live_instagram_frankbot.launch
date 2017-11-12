@@ -1,9 +1,0 @@
-<launch>
-  <arg name="filters" default=" " />
-  <node name="live_instagram" pkg="dt_live_instagram" type="live_instagram.py" output="screen">
-    <!-- Setup parameters -->
-    <param name="~filters" value="$(arg filters)" />
-    <!-- Remapping topics -->
-    <remap from="~compressed_img" to="Insert correct topic here"/>
-  </node>
-</launch>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from dt_live_instagram.instagram import Instagram
+from dt_live_instagram_frankbot.instagram import Instagram
 from std_msgs.msg import String #Imports msg
 
 class LiveInstagram(object):
@@ -13,10 +13,15 @@ class LiveInstagram(object):
         # Read parameters
         filters = self.setupParameter("~filters", "")
         self.instagram = Instagram(filters)
+        # Set the topics
+        topic = "/frankbot/camera_node/image"
+        compressed = "/compressed"
+        topic_in = topic + compressed
+        topic_out = topic + "/" + filters + compressed
         # Setup publishers
-        self.pub_filteredImg = rospy.Publisher("write topic here/filtered/compressed", String, queue_size=1)
+        self.pub_filteredImg = rospy.Publisher(topic_out, String, queue_size=1)
         # Setup subscriber
-        self.sub_img = rospy.Subscriber("write topic here/compressed", String, self.cbTopic)
+        self.sub_img = rospy.Subscriber(topic_in, String, self.cbTopic)
 
         rospy.loginfo("[%s] Initialzed." %(self.node_name))
 
@@ -37,10 +42,10 @@ class LiveInstagram(object):
 
 if __name__ == '__main__':
     # Initialize the node with rospy
-    rospy.init_node('talker', anonymous=False)
+    rospy.init_node('dt_live_instagram_frankbot_node', anonymous=False)
 
     # Create the NodeName object
-    node = Talker()
+    node = LiveInstagram()
 
     # Setup proper shutdown behavior 
     rospy.on_shutdown(node.on_shutdown)

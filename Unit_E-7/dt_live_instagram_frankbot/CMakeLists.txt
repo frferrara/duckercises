@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(dt_live_instagram)
+project(dt_live_instagram_frankbot)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -9,8 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   duckietown_msgs # Every duckietown packages must use this.
   sensor_msgs
-  cv2
-  duckietown_utils
 )
 
 ## System dependencies are found with CMake's conventions
