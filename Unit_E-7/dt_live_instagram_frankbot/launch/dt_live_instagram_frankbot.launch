@@ -1,7 +1,0 @@
-<launch>
-  <arg name="filters" default=" " />
-  <node name="dt_live_instagram_frankbot_node" pkg="dt_live_instagram_frankbot" type="live_instagram.py" output="screen">
-    <!-- Setup parameters -->
-    <param name="~filters" value="$(arg filters)" />
-  </node>
-</launch>

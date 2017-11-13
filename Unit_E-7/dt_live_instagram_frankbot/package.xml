@@ -3,13 +3,13 @@
   <name>dt_live_instagram_frankbot</name>
   <version>1.0.0</version>
   <description>
-    Live image processing.
+    Live instagram package
   </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
-  <author email="fr.ferrara@gmail.com">Francesco Ferrara</author>
-  <maintainer email="fr.ferrara@gmail.com">Francesco Ferrara</maintainer>
+  <author email="francesco.ferrara@helbling.ch">Francesco Ferrara</author>
+  <maintainer email="francesco.ferrara@helbling.ch">Francesco Ferrara</maintainer>
 
 
 

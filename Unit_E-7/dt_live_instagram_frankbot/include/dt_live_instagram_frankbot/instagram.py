@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Import modules
 import cv2
 import duckietown_utils as du
@@ -118,7 +116,7 @@ if __name__ == "__main__":
     im_out_rgb = du.rgb_from_ros(msg_out)
     im_out_bgr = cv2.cvtColor(im_out_rgb, cv2.COLOR_RGB2BGR)
     cv2.imwrite("vflip.jpg", im_out_bgr)
-    
+
     # Flip horizontally
     msg_in.data = du.d8_compressed_image_from_cv_image(im, msg_in).data
     inst = Instagram("flip-horizontal")
@@ -126,14 +124,14 @@ if __name__ == "__main__":
     im_out_rgb = du.rgb_from_ros(msg_out)
     im_out_bgr = cv2.cvtColor(im_out_rgb, cv2.COLOR_RGB2BGR)
     cv2.imwrite("hflip.jpg", im_out_bgr)
-    
+
     # Grayscale
     msg_in.data = du.d8_compressed_image_from_cv_image(im, msg_in).data
     inst = Instagram("grayscale")
     msg_out = inst.processMsg(msg_in)
     im_out_rgb = du.rgb_from_ros(msg_out)
     cv2.imwrite("grayscale.jpg", im_out_rgb)
-    
+
     # Sepia
     msg_in.data = du.d8_compressed_image_from_cv_image(im, msg_in).data
     inst = Instagram("sepia")
@@ -141,14 +139,14 @@ if __name__ == "__main__":
     im_out_rgb = du.rgb_from_ros(msg_out)
     im_out_bgr = cv2.cvtColor(im_out_rgb, cv2.COLOR_RGB2BGR)
     cv2.imwrite("sepia.jpg", im_out_bgr)
-    
+
     # Full flip and Grayscale
     msg_in.data = du.d8_compressed_image_from_cv_image(im, msg_in).data
     inst = Instagram("flip-vertical:flip-horizontal:grayscale")
     msg_out = inst.processMsg(msg_in)
     im_out_rgb = du.rgb_from_ros(msg_out)
     cv2.imwrite("./fflip_grayscale.jpg", im_out_rgb)
-    
+
     # Full flip and Sepia
     msg_in.data = du.d8_compressed_image_from_cv_image(im, msg_in).data
     inst = Instagram("flip-horizontal:flip-vertical:sepia")

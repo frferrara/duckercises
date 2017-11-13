@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from dt_live_instagram_frankbot.instagram import Instagram
-from std_msgs.msg import String #Imports msg
+from sensor_msgs.msg import CompressedImage
 
 class LiveInstagram(object):
     def __init__(self):
@@ -11,19 +11,25 @@ class LiveInstagram(object):
         rospy.loginfo("[%s] Initialzing." %(self.node_name))
 
         # Read parameters
-        filters = self.setupParameter("~filters", "")
+        filters = self.setupParameter("~filter", "")
         self.instagram = Instagram(filters)
         # Set the topics
+        filters = filters.replace("-", "_")
+        filters = filters.replace(":", "__")
         topic = "/frankbot/camera_node/image"
         compressed = "/compressed"
         topic_in = topic + compressed
         topic_out = topic + "/" + filters + compressed
-        # Setup publishers
-        self.pub_filteredImg = rospy.Publisher(topic_out, String, queue_size=1)
-        # Setup subscriber
-        self.sub_img = rospy.Subscriber(topic_in, String, self.cbTopic)
+        rospy.loginfo("[%s] Subscribing to topic %s." %(self.node_name, topic_in))
+        rospy.loginfo("[%s] Publishing to topic %s." %(self.node_name, topic_out))
 
-        rospy.loginfo("[%s] Initialzed." %(self.node_name))
+        # Setup publisher
+        self.pub_filteredImg = rospy.Publisher(topic_out, CompressedImage, queue_size = 1)
+        # Setup subscriber
+        self.sub_img = rospy.Subscriber(topic_in, CompressedImage, self.cbTopic)
+
+        rospy.loginfo("[%s] Initialized." %(self.node_name))
+
 
     def setupParameter(self, param_name, default_value):
         value = rospy.get_param(param_name, default_value)
@@ -31,14 +37,15 @@ class LiveInstagram(object):
         rospy.loginfo("[%s] %s = %s " %(self.node_name, param_name, value))
         return value
 
-    def cbTopic(self, msg):
+
+    def cbTopic(self, msg_in):
         # Filter and publish the image
-        msg_out = self.instagram.processMsg(msg)
+        msg_out = self.instagram.processMsg(msg_in)
         self.pub_filteredImg.publish(msg_out)
+
 
     def on_shutdown(self):
         rospy.loginfo("[%s] Shutting down." %(self.node_name))
-
 
 if __name__ == '__main__':
     # Initialize the node with rospy
